@@ -2,20 +2,26 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
+    use DatabaseMigrations;
+
     public function testBasicTest()
     {
-        $response = $this->get('/');
+        $response = $this->post('/api/categories', [
+            'name' => 'Drama',
+            'description' => 'Lorem ipsum silor',
+            'is_active' => true
+        ], [
+            'Accept' => 'application/json'
+        ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(201);
+        $this->arrayHasKey('id', $response->decodeResponseJson());
+        $this->assertEquals('Drama', $response->decodeResponseJson('name'));
     }
 }
