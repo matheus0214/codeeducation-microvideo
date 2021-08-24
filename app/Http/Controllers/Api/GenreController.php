@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 class GenreController extends Controller
 {
     private $rules = [
-        'name' => 'string|max:255',
+        'name' => 'required|string|max:255',
         'is_active' => 'boolean'
     ];
 

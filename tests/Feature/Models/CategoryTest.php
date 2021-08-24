@@ -34,6 +34,7 @@ class CategoryTest extends TestCase
         $category->refresh();
 
         $this->assertEquals('Category one', $category->name);
+        $this->assertEquals(36, strlen($category->id));
         $this->assertNull($category->description);
         $this->assertTrue($category->is_active);
         $this->assertTrue(Uuid::isValid($category->id));
