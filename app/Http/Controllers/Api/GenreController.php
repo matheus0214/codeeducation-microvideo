@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Genre;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
-class GenreController extends Controller
+class GenreController extends BasicCrudController
 {
     private $rules = [
         'name' => 'required|string|max:255',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'categories_id' => 'required|array|exists:categories,id,deleted_at,NULL'
     ];
 
     public function index()
@@ -20,28 +20,57 @@ class GenreController extends Controller
 
     public function store(Request $request)
     {
-        $this->validate($request, $this->rules);
-        $genre = Genre::create($request->all());
+        $validatedData = $this->validate($request, $this->rules);
+
+        $self = $this;
+        $genre = \DB::transaction(function () use ($self, $request,  $validatedData) {
+            $genre = Genre::create($validatedData);
+            $self->handleRelations($genre, $request);
+
+            return $genre;
+        });
+
+        $genre->refresh();
 
         return $genre;
     }
 
-    public function show(Genre $genre)
+    public function model()
     {
+        return Genre::class;
+    }
+
+    public function update(Request $request, $id)
+    {
+        $genre = $this->findOrFail($id);
+        $validateData = $this->validate($request, $this->rulesUpdate());
+
+        $self = $this;
+
+        $genre = \DB::transaction(function () use ($self, $request, $genre, $validateData) {
+            $genre->update($validateData);
+            $self->handleRelations($genre, $request);
+
+            return $genre;
+        });
+
+        $genre->refresh();
+
         return $genre;
     }
 
-    public function update(Request $request, Genre $genre)
+    protected function rulesStore()
     {
-        $this->validate($request, $this->rules);
-        $genre->update($request->all());
-
-        return $genre;
+        return $this->rules;
     }
 
-    public function destroy(Genre $genre)
+    protected function rulesUpdate()
     {
-        $genre->delete();
-        return response()->noContent();
+        return $this->rules;
+    }
+
+    protected function handleRelations(Genre $genre, Request $request)
+    {
+        $genre->categories()->sync($request->get('categories_id'));
     }
 }

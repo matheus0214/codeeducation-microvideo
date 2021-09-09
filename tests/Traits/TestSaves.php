@@ -3,6 +3,7 @@
 namespace Tests\Traits;
 
 use Illuminate\Foundation\Testing\TestResponse;
+use Response;
 
 trait TestSaves
 {
@@ -40,12 +41,18 @@ trait TestSaves
     {
         $model = $this->model();
         $table = (new $model)->getTable();
-        $this->assertDatabaseHas($table, $testDatabase + ['id' => $response->json('id')]);
+
+        $this->assertDatabaseHas($table, ['id' => $response->json('id')]);
     }
 
     private function assertJsonResponseContent(TestResponse $response, $testDatabase, $testJsonData = null)
     {
         $testResponse = $testJsonData ?? $testDatabase;
-        $response->assertJsonFragment($testResponse + ['id' => $response->json('id')]);
+        $response->assertJsonFragment($testResponse + ['id' => $this->getIdFromResponse($response)]);
+    }
+
+    private function getIdFromResponse(TestResponse $response)
+    {
+        return $response->json('id');
     }
 }
