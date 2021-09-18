@@ -4,11 +4,8 @@ namespace Tests\Feature\Models\Video;
 
 use App\Models\Video;
 use Illuminate\Database\Events\TransactionCommitted;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
 use Tests\Exceptions\TestException;
-use Tests\TestCase;
 
 class VideoUploadTest extends BaseVideoTestCase
 {
@@ -24,6 +21,31 @@ class VideoUploadTest extends BaseVideoTestCase
 
         \Storage::assertExists($video->id . '/' . $video->thumb_file);
         \Storage::assertExists($video->id . '/' . $video->video_file);
+    }
+
+    public function testUpdateWithFiles()
+    {
+        \Storage::fake();
+        $video = factory(Video::class)->create();
+        $thumbFile = UploadedFile::fake()->image('thumb.jpg');
+        $videoFile = UploadedFile::fake()->image('video.mp4');
+        $video->update(
+            $this->data + [
+                'thumb_file' => $thumbFile,
+                'video_file' => $videoFile,
+            ]
+        );
+
+        \Storage::assertExists($video->id . '/' . $video->thumb_file);
+        \Storage::assertExists($video->id . '/' . $video->video_file);
+
+        $newVideoFile = UploadedFile::fake()->create('video.mp4');
+        $video->update([
+            'video_file' => $newVideoFile
+        ]);
+        \Storage::assertExists($video->id . '/' . $thumbFile->hashName());
+        \Storage::assertExists($video->id . '/' . $newVideoFile->hashName());
+        \Storage::assertMissing($video->id . '/' . $videoFile->hashName());
     }
 
     public function testCreateIfRollbackFiles()

@@ -65,7 +65,6 @@ class Video extends Model
     public function update(array $attributes = [], array $options = [])
     {
         $files = $this->extractFiles($attributes);
-        $oldFile = $this['video_file'];
 
         try {
             \DB::beginTransaction();
@@ -75,15 +74,18 @@ class Video extends Model
             if ($saved) {
                 // Upload new files, and delete old one
                 $this->uploadFiles($files);
-                // dd($oldFile, $attributes);
-                $this->deleteFiles([$oldFile]);
             }
 
             \DB::commit();
+
+            if ($saved && count($files)) {
+                $this->deleteOldFiles();
+            }
+
             return $saved;
         } catch (\Exception $e) {
             // Need to delete files upload
-
+            $this->deleteFiles($files);
             \DB::rollBack();
 
             throw $e;
