@@ -19,7 +19,7 @@ class UploadFilesUnitTest extends TestCase
 
     public function testUploadFile()
     {
-        // \Storage::fake();
+        \Storage::fake();
         $file = UploadedFile::fake()->create('video.mp4');
         $this->obj->uploadFile($file);
 

@@ -6,6 +6,7 @@ use App\Models\Video;
 use PHPUnit\Framework\TestCase;
 use App\Models\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\UploadFiles;
 
 class VideoUnitTest extends TestCase
 {
@@ -19,7 +20,16 @@ class VideoUnitTest extends TestCase
 
     public function testFillable()
     {
-        $fillable = ['title', 'description', 'year_launched', 'opened', 'rating', 'duration'];
+        $fillable = [
+            'title',
+            'description',
+            'year_launched',
+            'opened',
+            'rating',
+            'duration',
+            'video_file',
+            'thumb_file'
+        ];
 
         $this->assertEquals(
             $fillable,
@@ -31,7 +41,8 @@ class VideoUnitTest extends TestCase
     {
         $traits = [
             Uuid::class,
-            SoftDeletes::class
+            SoftDeletes::class,
+            UploadFiles::class
         ];
 
         $videoTraits = array_keys(class_uses(Video::class));
