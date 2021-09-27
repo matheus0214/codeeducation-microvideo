@@ -2,14 +2,16 @@
 
 namespace Tests\Feature\Http\Controllers\Api\VideoController;
 
+use App\Http\Resources\VideoResource;
 use App\Models\Video;
 use Illuminate\Http\UploadedFile;
+use Tests\Traits\TestResources;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
 class VideoControllerUploadTest extends BaseVideoControllerTestCase
 {
-    use TestValidations, TestSaves;
+    use TestValidations, TestSaves, TestResources;
 
     public function testInvalidationVideo()
     {
@@ -120,10 +122,10 @@ class VideoControllerUploadTest extends BaseVideoControllerTestCase
             'thumb_file' => $thumb,
             'banner_file' => $banner,
         ]);
-        \Storage::assertExists($response->json('id') . '/' . $video->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $trailer->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $thumb->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $banner->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $video->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $trailer->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $thumb->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $banner->hashName());
 
         $response->assertStatus(201);
     }
@@ -141,10 +143,10 @@ class VideoControllerUploadTest extends BaseVideoControllerTestCase
             'thumb_file' => $thumb,
             'banner_file' => $banner,
         ]);
-        \Storage::assertExists($response->json('id') . '/' . $video->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $trailer->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $thumb->hashName());
-        \Storage::assertExists($response->json('id') . '/' . $banner->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $video->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $trailer->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $thumb->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $banner->hashName());
 
         $response->assertStatus(200);
     }
@@ -198,7 +200,7 @@ class VideoControllerUploadTest extends BaseVideoControllerTestCase
             $this->sendData + ['video_file' => $file]
         );
 
-        \Storage::assertExists($response->json('id') . '/' . $file->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $file->hashName());
 
         $file = UploadedFile::fake()->create('video.mp4', 'video/mp4');
         $fileUpdate = UploadedFile::fake()->create('video_update.mp4');
@@ -210,14 +212,19 @@ class VideoControllerUploadTest extends BaseVideoControllerTestCase
 
         $response = $this->json(
             'PUT',
-            route('videos.update', ['video' => $response->json('id')]),
+            route('videos.update', ['video' => $response->json('data.id')]),
             $this->sendData + ['video_file' => $fileUpdate]
         );
 
         $response->assertStatus(200);
 
-        \Storage::assertExists($response->json('id') . '/' . $fileUpdate->hashName());
-        \Storage::assertMissing($response->json('id') . '/' . $file->hashName());
+        \Storage::assertExists($response->json('data.id') . '/' . $fileUpdate->hashName());
+        \Storage::assertMissing($response->json('data.id') . '/' . $file->hashName());
+
+        $id = $response->json('data.id');
+        $resource = new VideoResource(Video::find($id));
+
+        $this->assertResource($response, $resource);
     }
 
     protected  function model()

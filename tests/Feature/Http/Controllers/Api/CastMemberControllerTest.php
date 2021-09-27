@@ -2,25 +2,47 @@
 
 namespace Tests\Feature\Http\Controllers\Api;
 
+use App\Http\Resources\CastMemberResource;
 use App\Models\CastMember;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Tests\Feature\Models\CastMemberTest;
 use Tests\TestCase;
+use Tests\Traits\TestResources;
 
 class CastMemberControllerTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, TestResources;
+
+    private $serializedFields = [
+        'id',
+        'name',
+        'type',
+        'created_at',
+        'updated_at',
+        'deleted_at'
+    ];
 
     public function testIndex()
     {
         $members = factory(CastMember::class)->create();
         $response = $this->json('GET', route('cast_members.index'));
-        // dd($members->toArray(), $response->content()->toArray());
 
         $response
             ->assertStatus(200)
-            ->assertJson([$members->toArray()]);
+            ->assertJson([
+                'meta' => [
+                    'per_page' => 15
+                ]
+            ])
+            ->assertJsonStructure([
+                'data' => ['*' => $this->serializedFields],
+                'meta' => [],
+                'links' => []
+            ]);
+
+        $resource = CastMemberResource::collection(collect([$members]));
+
+        $this->assertResource($response, $resource);
     }
 
     public function testShow()
@@ -31,7 +53,12 @@ class CastMemberControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson($member->toArray());
+            ->assertJsonStructure([
+                'data' => $this->serializedFields
+            ])
+            ->assertJson([
+                'data' => $member->toArray()
+            ]);
     }
 
     public function testStore()
@@ -46,9 +73,15 @@ class CastMemberControllerTest extends TestCase
         );
 
         $response->assertStatus(201)->assertJson([
-            'name' => 'Juan',
-            'type' => 1
+            'data' => [
+                'name' => 'Juan',
+                'type' => 1
+            ]
         ]);
+        $id = $response->json('data.id');
+        $resource = new CastMemberResource(CastMember::find($id));
+
+        $this->assertResource($response, $resource);
 
         $response = $this->json(
             'POST',
@@ -119,9 +152,15 @@ class CastMemberControllerTest extends TestCase
         );
 
         $response->assertStatus(200)->assertJson([
-            'name' => 'Juan',
-            'type' => 1
+            'data' => [
+                'name' => 'Juan',
+                'type' => 1
+            ]
         ]);
+        $id = $response->json('data.id');
+        $resource = new CastMemberResource(CastMember::find($id));
+
+        $this->assertResource($response, $resource);
 
         $response = $this->json(
             'PUT',

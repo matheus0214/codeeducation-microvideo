@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Resources\GenreResource;
 use App\Models\Genre;
 use Illuminate\Http\Request;
 
@@ -13,10 +14,6 @@ class GenreController extends BasicCrudController
         'categories_id' => 'required|array|exists:categories,id,deleted_at,NULL'
     ];
 
-    public function index()
-    {
-        return Genre::all();
-    }
 
     public function store(Request $request)
     {
@@ -32,7 +29,7 @@ class GenreController extends BasicCrudController
 
         $genre->refresh();
 
-        return $genre;
+        return new GenreResource($genre);
     }
 
     public function model()
@@ -56,7 +53,7 @@ class GenreController extends BasicCrudController
 
         $genre->refresh();
 
-        return $genre;
+        return new GenreResource($genre);
     }
 
     protected function rulesStore()
@@ -72,5 +69,15 @@ class GenreController extends BasicCrudController
     protected function handleRelations(Genre $genre, Request $request)
     {
         $genre->categories()->sync($request->get('categories_id'));
+    }
+
+    protected function resource()
+    {
+        return GenreResource::class;
+    }
+
+    protected function resourceCollection()
+    {
+        return $this->resource();
     }
 }
